@@ -101,10 +101,19 @@ server.mainServer = (req, res) => {
 
 // routers
 server.router = {
+    '':__handler__.index,
+    'account/create': __handler__.accountCreate,
+    'account/edit': __handler__.accountEdit,
+    'account/removed': __handler__.accountRemove,
+    'session/create': __handler__.sessionCreate,
+    'session/removed': __handler__.sessionDeleted,
+    'checks/all': __handler__.checkList,
+    'checks/create': __handler__.checksCreate,
+    'checks/edit':__handler__.checksEdit,
     'ping': __handler__.ping,
-    'user': __handler__.user,
-    'token': __handler__.token,
-    'check': __handler__.checks 
+    'api/user': __handler__.user,
+    'api/token': __handler__.token,
+    'apicheck': __handler__.checks 
 };
 
 server.init = () => {
