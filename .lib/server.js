@@ -10,6 +10,10 @@ const __handler__ = require('./handler.js');
 const __helper__ = require('./helper.js');
 // const user_data = require('./.lib/data.js');
 const path = require('path');
+const util = require('util');
+const debug = util.debuglog('server');
+
+
 
 let server = {}
 
@@ -83,6 +87,12 @@ server.mainServer = (req, res) => {
             res.setHeader('Content-Type', 'application/json');
             res.writeHead(statusCode);
             res.end(_payload);
+
+            let statusCodeColor = '';
+            if(statusCode == 200)
+                 debug('\x1b[32m%s\x1b[0m', method.toUpperCase() + ' /' + path + ' ' + statusCode);
+            else
+                debug('\x1b[31m%s\x1b[0m', method.toUpperCase() + ' /' + path + ' ' + statusCode);
         });
     });
 }
@@ -101,12 +111,12 @@ server.init = () => {
 
 server.httpServer.listen(http_PORT, (error) => {
     if(!error)
-        console.log(`HTTP_Server is running at ${_config.envName} port: ${http_PORT}`);
+        console.log('\x1b[36m%s\x1b[0m' ,`HTTP_Server is running at ${_config.envName} port: ${http_PORT}`);
 });
 
 server.httpsServer.listen(https_PORT, (error) => {
     if(!error)
-        console.log(`HTTPs_Server is running at ${_config.envName} - port: ${https_PORT}`)
+        console.log('\x1b[35m%s\x1b[0m', `HTTPs_Server is running at ${_config.envName} - port: ${https_PORT}`)
 });
 }
 

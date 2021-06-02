@@ -7,12 +7,19 @@ const url = require('url');
 const __log = require('./log.js');
 // const queryString = require('queryString');
 
+const util = require('util');
+const debug = util.debuglog('worker');
+
 let worker = {}
 
 
 worker.init = () => {
+    console.log('\x1b[33m%s\x1b[0m', 'Background Workers are Running');
+
     worker.gatherAllChecks();
     worker.loopChecks();
+    worker.rotateLog();
+    worker.loopLogs();
 }
 
 worker.gatherAllChecks = () => {
@@ -24,12 +31,12 @@ worker.gatherAllChecks = () => {
                         let check = __helper__.parseJsonData(data);
                         worker.validateCheck(check);
                     }else{
-                        console.log('could not read check');
+                        debug('could not read check');
                     }
                 });
             });
         }else{
-            console.log('Error : Could not find any check');
+            debug('Error : Could not find any check');
         }
     });
 }
@@ -37,6 +44,35 @@ worker.gatherAllChecks = () => {
 
 worker.loopChecks = () => {
     setInterval(worker.gatherAllChecks, 1000 * 60);
+}
+
+worker.rotateLog = () => {
+    __log.list(false, (error, logs) => {
+        if(!error && logs && logs.length > 0){
+            logs.forEach((logName) => {
+                let logId = logName.replace('.log', '');
+                let newFileId = logId + '-' + Date.now();
+                __log.compress(logId, newFileId, (error) => {
+                    if(!error){
+                        __log.truncate(logId, (error) => {
+                            if(!error)
+                                debug('Success trunating logFile');
+                            else
+                                debug("Error while truncating logFile: ", error);
+                        });
+                    }else{
+                        debug('Error : Compressing log file', error);
+                    }
+                });
+            });
+        }else{
+            debug('Error : could not find any logs to rotate');
+        }
+    });
+}
+
+worker.loopLogs = () => {
+    setInterval(worker.rotateLog, 1000 * 60 * 60 *24);
 }
 
 
@@ -56,10 +92,10 @@ worker.validateCheck = (check) => {
         if(id && protocol && url && method && successCode && timeoutSec){
             worker.processCheck(check);
         }else{
-            console.log(`check: ${id} is not formatted`);
+            debug(`check: ${id} is not formatted`);
         }
     }else{
-        console.log('null check');
+        debug('null check');
     }
 }
 
@@ -86,7 +122,7 @@ worker.processCheck = (check) => {
     
     let protocol_module = check.protocol.toLowerCase() == 'http' ? http : https;
     let req = protocol_module.request(requestDetails, (res) => {
-       //  console.log(res.statusCode);
+       //  debug(res.statusCode);
         let status = res.statusCode;
         checkOutcome.responseCode = status;
         if(!outcomeSent){
@@ -122,7 +158,7 @@ worker.processCheck = (check) => {
 
 
 worker.processCheckOutCome = (check, checkOutcome) => {
-   // console.log(check.state, check.successCode, checkOutcome); 
+   // debug(check.state, check.successCode, checkOutcome); 
 
     let state = !checkOutcome.error && checkOutcome.responseCode && check.statusCode.indexOf(checkOutcome.responseCode) > -1 ? 'up' : 'down';
     
@@ -140,10 +176,10 @@ worker.processCheckOutCome = (check, checkOutcome) => {
             if(alert){
                 worker.alertUserToStatusChange(newCheck);
             }else{
-                console.log('check outcome has not changed, no alert needed');
+                debug('check outcome has not changed, no alert needed');
             }
         }else{
-            console.log('Error trying to save update to check');
+            debug('Error trying to save update to check');
         }
     })
 }
@@ -153,9 +189,9 @@ worker.alertUserToStatusChange = (check) => {
 
     __helper__.sendTwilioSMS(check.userPhone, message, (error) => {
         if(!error){
-            console.log('message sent to check user: ', message);
+            debug('message sent to check user: ', message);
         }else{
-            console.log('could not send message to check user');
+            debug('could not send message to check user');
         }
     });
 }
@@ -173,9 +209,9 @@ worker.uploadLogs = (check, checkOutcome, state, userAlert, checkTime) => {
 
     __log.appendLogs(check.id, logDataString, (error) => {
         if(!error){
-            console.log('logged');
+            debug('logged');
         }else{
-            console.log("could not append log data");
+            debug("could not append log data");
         }
     });
 }
