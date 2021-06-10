@@ -23,6 +23,7 @@ helper.parseJsonData = (data) => {
         let jsonObj = JSON.parse(data);
         return jsonObj;
     }catch{
+        console.log("could not parse json data");
         return {};
     }
 }
@@ -86,7 +87,7 @@ helper.getTemplate = (templateName, data, callback) => {
 
     if(templateName){
         let templatePath = path.join(__dirname + '/' + '../templates/');
-        fs.readFile(templatePath + templateName + '.html', 'utf8', (error, str) => {
+        fs.readFile(templatePath + templateName + '.html', 'utf8', (error, data) => {
             if(!error && str){
                 let finalTemplateData = helper.interpolate(str, data);
                 callback(false, finalTemplateData);    
@@ -107,7 +108,6 @@ helper.addMasterPage = (string, data, callback) => {
             helper.getTemplate('footer', data, (error, footer) => {
                 if(!error && footer){
                     let pageData = header + string + footer;
-                    //  console.log(pageData);
                     callback(false, pageData);
                 }else{
                     callback('Error : Could not find footer');
@@ -124,43 +124,21 @@ helper.addMasterPage = (string, data, callback) => {
 helper.interpolate = (string, data) => {
     string = typeof(string) == 'string' && string.length > 0 ? string : '';
     data = typeof(data) == 'object' && data !== null ? data : false;
-    
+
     for(let key in _config.templateGlobals){
         if(_config.templateGlobals.hasOwnProperty(key)){
             data['global.'+key] = _config.templateGlobals[key];
         }
     }
-    //console.log(data);
+
     for(let key in data){
-        if(data.hasOwnProperty(key) && typeof(data[key]) == 'string'){ 
-            let find = '{'+key+'}';
-            let replace = data[`${key}`];
-            string.replace('{head.title}', replace);
-            // console.log(string.replace(find, replaceBy));
+        if(data.hasOwnProperty(key) && typeof(data[key]) == 'string'){
+            let replaceBy = data[key];
+            let find = '{'+ key +'}';
+            string.replace(find, replaceBy);
         }
     }
-    //console.log(string);
     return string;
 }
-
-helper.getStaticAssets = (fileName, callback) => {
-    fileName = typeof(fileName) == 'string' && fileName.length > 0 ? fileName : false;
-    if(fileName){
-        let filePath = path.join(__dirname, '/', '../public/');
-        fs.readFile(filePath+fileName, (error, data) => {
-            if(data && !error){
-            
-                callback(false, data);
-            }else{
-            //    console.log('could not find public');
-                callback('could not find public file');
-            }
-        });
-    }else{
-        // callback('invalid public file');
-        callback('invalid file name');
-    }
-}
-
 
 module.exports = helper;

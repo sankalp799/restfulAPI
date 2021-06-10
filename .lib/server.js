@@ -68,7 +68,10 @@ server.mainServer = (req, res) => {
 
         // chose handler
         let handler = typeof(server.router[path]) !== 'undefined' ? server.router[path] : __handler__.notFound;
-        
+
+        handler = path.indexOf('public/') > -1 ? __handler__.public : handler;
+       // console.log(path);
+
         // data
         let data = {
             "path": path,
@@ -78,15 +81,61 @@ server.mainServer = (req, res) => {
             "payload": __helper__.parseJsonData(buffer)
         };
 
-        handler(data, (statusCode, payload) => {
-            let Status_Code = typeof(statusCode) == 'number' ? statusCode : 200;
-            let _payload = typeof(payload) == 'object' ? payload : {};
+        handler(data, (statusCode, payload, contentType) => {
+            contentType = typeof(contentType) == 'string' ? contentType : 'json';
 
-            _payload = JSON.stringify(_payload);
+            let StatusCode = typeof(statusCode) == 'number' ? statusCode : 200;
             
-            res.setHeader('Content-Type', 'application/json');
-            res.writeHead(statusCode);
+            let _payload = '';
+            if(contentType == 'json'){
+                _payload = typeof(payload) == 'object' ? payload : {};
+                _payload = JSON.stringify(_payload);
+                res.setHeader('Content-Type', 'application/json');
+            }
+            if(contentType == 'html'){
+               // console.log('html');
+                res.setHeader('Content-Type', 'text/html');
+                _payload = typeof(payload) == 'string' ? payload : '';
+            }
+            if(contentType == 'favicon'){
+                res.setHeader('Content-Type', 'image/x-icon');
+                _payload = typeof(payload) !== 'undefined' ? payload : '';
+            }
+            
+            if(contentType == 'css'){
+                //console.log('css');
+                res.setHeader('Content-Type', 'text/css');
+                _payload = typeof(payload) !== 'undefined' ? payload : '';
+            }
+            
+            if(contentType == 'javascript'){
+                //console.log('css');
+                res.setHeader('Content-Type', 'text/javascript');
+                _payload = typeof(payload) !== 'undefined' ? payload : '';
+            }
+
+            if(contentType == 'png'){
+                res.setHeader('Content-Type', 'image/png');
+                _payload = typeof(payload) !== 'undefined' ? payload : '';
+            }
+            
+            if(contentType == 'jpg'){
+                res.setHeader('Content-Type', 'image/jpeg');
+                _payload = typeof(payload) !== 'undefined' ? payload : '';
+            }
+            
+            if(contentType == 'plain'){
+                res.setHeader('Content-Type', 'text/plain');
+                _payload = typeof(payload) !== 'undefined' ? payload : '';
+            }
+            
+        //            console.log(_payload);           
+            res.writeHead(StatusCode);
             res.end(_payload);
+
+            
+            
+
 
             let statusCodeColor = '';
             if(statusCode == 200)
@@ -113,7 +162,9 @@ server.router = {
     'ping': __handler__.ping,
     'api/user': __handler__.user,
     'api/token': __handler__.token,
-    'apicheck': __handler__.checks 
+    'api/check': __handler__.checks,
+    'favicon.ico': __handler__.favicon,
+    'public': __handler__.public
 };
 
 server.init = () => {

@@ -5,6 +5,133 @@ const _config = require('../config');
 
 handler = {}
 
+
+/************
+ *
+ * HTML Handlers
+ *
+ */
+
+// index handler
+handler.index = (data, callback) => {
+    if(data.method == 'get'){
+        let pageData = {
+            'head.title':'UpTime Monitoring - Simple',
+            'head.description':'Free up time monitoring for HTTP/HTTPs Request',
+            'body.class':'index'
+        };
+        
+        __helper__.getTemplate('index', pageData, (error, templateData) => {
+            if(templateData && !error){
+                __helper__.addMasterPage(templateData, pageData, (error, masterPageData) => {
+                    if(masterPageData && !error){
+                        //console.log(masterPageData);
+                        callback(200, masterPageData, 'html');
+                    }else{
+                        callback(500, undefined, 'html')
+                    }
+                });
+            }else{
+                callback(404, undefined, 'html');
+            }
+        });
+    }else{
+        callback(405, undefined, 'html')
+    }
+};
+
+
+handler.accountCreate = (data, callback) => {
+    if(data.method == 'get'){
+        let pageData = {
+            'head.title':'AccountCreate',
+            'head.description':'Free Sign Up for User Account',
+            'body.class':'Create Account'
+        };
+        
+        __helper__.getTemplate('accountCreate', pageData, (error, templateData) => {
+            if(templateData && !error){
+                __helper__.addMasterPage(templateData, pageData, (error, masterPageData) => {
+                    if(masterPageData && !error){
+                        //console.log(masterPageData);
+                        callback(200, masterPageData, 'html');
+                    }else{
+                        callback(500, undefined, 'html')
+                    }
+                });
+            }else{
+                callback(404, undefined, 'html');
+            }
+        });
+    }else{
+        callback(405, undefined, 'html')
+    }
+}
+
+
+handler.favicon = (data, callback) => {
+    if(data.method == 'get'){
+        __helper__.getStaticAssets('favicon.ico', (error, data) => {
+            if(!error && data){
+                callback(200, data, 'favicon');
+            }else{
+                callback(500);
+            }
+        });
+    }else{
+        callback(405);
+    }
+}
+
+handler.public = (data, callback) => {
+    if(data.method == 'get'){
+        let path = data.path;
+        // console.log('called');
+        let trimmedFileName = path.split('/');
+        trimmedFileName = trimmedFileName[trimmedFileName.length-1];
+        if(trimmedFileName.length > 0){
+            __helper__.getStaticAssets(trimmedFileName, (error, data) => {
+                if(!error && data){
+                    let contentType = 'plain';
+
+                    if(trimmedFileName.indexOf('.css') > -1){
+                        contentType = 'css';
+                        console.log('css');
+                    }
+                    if(trimmedFileName.indexOf('.ico') > -1){
+                        contentType = 'favicon';
+                    }
+                    if(trimmedFileName.indexOf('.jpg') > -1){
+                        contentType = 'jpg';
+                    }
+                    if(trimmedFileName.indexOf('.png') > -1){
+                        contentType = 'png';
+                    }
+                    if(trimmedFileName.indexOf('.js') > -1){
+                        contentType = 'javascript';
+                    }
+           //         console.log(contentType);
+                    callback(200, data, contentType);
+                }else{
+                    callback(404);
+                }
+            });
+        }else{
+            callback(404);
+        }
+    }else{
+        callback(405);
+    }
+}
+
+
+
+
+/****************
+ *
+ * JSON-API Handlers
+ *
+ */
 handler.ping = (data, callback) => {
     callback(200);
 }
@@ -16,6 +143,7 @@ handler.notFound = (data, callback) => {
 
 // user handlers
 handler.user = (data, callback) => {
+    console.log(data.method);
     let allowedMethods = ['get', 'post', 'put', 'delete'];
     if(allowedMethods.indexOf(data.method.toLowerCase()) > -1){
         handler._user[data.method](data, callback);
@@ -30,10 +158,9 @@ handler._user = {};
 handler._user.post = (data, callback) => {
     let firstName = typeof(data.payload.firstName) == 'string' && data.payload.firstName.trim().length > 0 ? data.payload.firstName : false;
     let lastName = typeof(data.payload.lastName) == 'string' && data.payload.lastName.trim().length > 0 ? data.payload.lastName : false;
-    let phone = typeof(data.payload.phone) == 'number' && data.payload.phone.toString().length == 10 ? data.payload.phone : false;
+    let phone = typeof(data.payload.phone) == 'string' && data.payload.phone.length == 10 ? data.payload.phone : false;
     let password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password : false;
     let agreement = typeof(data.payload.agreement) == 'boolean' && data.payload.agreement ? true : false;
-    
     if(firstName && lastName && password && agreement && phone){
         __data__.read('user', '' + phone, (err, data) => {
             if(err){
@@ -49,7 +176,8 @@ handler._user.post = (data, callback) => {
                      __data__.create('user', '' + phone, newUser, (error) => {
                          if(!error){
                              callback(200);
-                         }else 
+                         }else
+                             console.log(error);
                              callback(500, {'Error': 'Internal Server Error'});
                      }); 
                  }else{
@@ -60,8 +188,9 @@ handler._user.post = (data, callback) => {
             }
         });
     }else{
-        console.log(data.payload.firstName, data.payload.agreement, data.payload.phone);
-        console.log(firstName, lastName, password, agreement, phone);
+        // console.log(data.payload);
+        //console.log(data.payload.firstName, data.payload.agreement, data.payload.phone);
+        //console.log(firstName, lastName, password, agreement, phone);
         callback(400, {"Error" : "Invalid input"});
     }
 }
