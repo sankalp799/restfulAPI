@@ -66,7 +66,35 @@ handler.accountCreate = (data, callback) => {
     }else{
         callback(405, undefined, 'html')
     }
-}
+};
+
+handler.sessionCreate = (data ,callback) => {
+    if(data.method == 'get'){
+        let pageData = {
+            'head.title':'New Session',
+            'head.description':'Create Session Here',
+            'body.class':'Session Create'
+        };
+        
+        __helper__.getTemplate('sessionCreate', pageData, (error, templateData) => {
+            if(templateData && !error){
+                __helper__.addMasterPage(templateData, pageData, (error, masterPageData) => {
+                    if(masterPageData && !error){
+                        //console.log(masterPageData);
+                        callback(200, masterPageData, 'html');
+                    }else{
+                        callback(500, undefined, 'html')
+                    }
+                });
+            }else{
+                callback(404, undefined, 'html');
+            }
+        });
+    }else{
+        callback(405, undefined, 'html')
+    }
+};
+
 
 
 handler.favicon = (data, callback) => {
@@ -334,7 +362,7 @@ handler._token.post = (data, callback) => {
                 let hash = __helper__.hash(password);
                 if(hash == user.password){
                     let newToken = {
-                        'tokenID': __helper__.createTokenId(phone),
+                        'id': __helper__.createTokenId(phone),
                         'phone': phone,
                         'expireBy': Date.now() + (60 * 60 * 1000)
                     };
@@ -375,14 +403,13 @@ handler._token.get = (data, callback) => {
 }
 
 handler._token.put = (data, callback) => {
+    let expand = typeof(data.payload.expand) == 'boolean' && data.payload.expand ? data.payload.expand : false;
     let id = typeof(data.payload.id) == 'string' && data.payload.id.trim().length > 10 ? data.payload.id : false;
-    if(id){
+    if(id && expand){
         __data__.read('tokens', '' + id, (err, data) => {
             if(data && !err){
                 let user_token = __helper__.parseJsonData(data);
                 user_token.expireBy = Date.now() + (1000 * 60 * 60);
-                console.log(Date.now(), '--', user_token);
-                console.log(Date.now() < user_token.expireBy);
                 __data__.update('tokens', '' + id, user_token, (err) => {
                     if(!err){
                         console.log('updated token');
