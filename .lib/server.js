@@ -40,10 +40,13 @@ server.mainServer = (req, res) => {
 
     // fetch and parse url
     let parseURL = url.parse(req.url, true);
-    
+    console.log(parseURL.search);
+
     // get path from url
     let path = parseURL.pathname;
+    // console.log('path: ', path);
     path = path.replace(/^\/+|\/+$/g, '');
+    // console.log('parsed path: ', path);
 
     //query string
     let queryString = parseURL.query;
@@ -179,5 +182,7 @@ server.httpsServer.listen(https_PORT, (error) => {
         console.log('\x1b[35m%s\x1b[0m', `HTTPs_Server is running at ${_config.envName} - port: ${https_PORT}`)
 });
 }
+
+
 
 module.exports = server;

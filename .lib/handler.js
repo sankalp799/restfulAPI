@@ -155,7 +155,7 @@ handler.user = (data, callback) => {
 handler._user = {};
 
 //create user handler
-handler._user.post = (data, callback) => {
+handler._user.post = async (data, callback) => {
     let firstName = typeof(data.payload.firstName) == 'string' && data.payload.firstName.trim().length > 0 ? data.payload.firstName : false;
     let lastName = typeof(data.payload.lastName) == 'string' && data.payload.lastName.trim().length > 0 ? data.payload.lastName : false;
     let phone = typeof(data.payload.phone) == 'string' && data.payload.phone.length == 10 ? data.payload.phone : false;
@@ -325,7 +325,7 @@ handler.token = (data, callback) => {
 handler._token = {}
 
 handler._token.post = (data, callback) => {
-    let phone = typeof(data.payload.phone) == 'number' && data.payload.phone.toString().length == 10 ? data.payload.phone : false;
+    let phone = typeof(data.payload.phone) == 'string' && data.payload.phone.toString().length == 10 ? data.payload.phone : false;
     let password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password : false;
     if(phone && password){
         __data__.read('user', '' + phone, (error, data) => {

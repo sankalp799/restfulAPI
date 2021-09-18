@@ -18,3 +18,17 @@ h1{
     color: red;
     font-size: 300%;
 }
+
+.header ul li a.loggedIn {
+    display: none;
+}
+
+body.loggedIn .header ul li a.loggedout{
+    display: none;
+}
+
+body.loggedIn .header ul li a.loggedIn{
+    display: inline-block;
+}
+
+

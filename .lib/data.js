@@ -21,10 +21,12 @@ _data.create = (directory, filename, data, callback) => {
                         }
                     });
                 }else{
+                    console.log(error.message);
                     callback('could not save data to file please try again later');
                 }
             });
         }else{
+            console.log(error.message);
             callback('Could not open file please try again later');
         }
     });
