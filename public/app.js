@@ -1,7 +1,7 @@
 let app = {};
 
 app.config = {
-    'sessionToken': false,
+    sessionToken: false,
 };
 
 app.client = {};
@@ -56,11 +56,12 @@ app.client.request = (headers, path, method, queryStringObj, payload, callback) 
             if(callback){
                 try{
                     responseText = JSON.parse(responseText);
+					// console.log(responseText);
                     callback(statusCode, responseText);
-                }catch{
+                }catch(e){
                     callback(statusCode, false);
                 }
-            }
+            }console.log(responseText);
         }
     }
     
@@ -71,13 +72,14 @@ app.client.request = (headers, path, method, queryStringObj, payload, callback) 
 
 // bind form
 app.bindForm = () => {
+	try{
     document.querySelector('form').addEventListener('submit', (e) => {
         e.preventDefault();
         let formData = document.getElementById('accountCreate');
         let formId = formData.id;
         let formMethod = formData.method;
         let formPath = formData.action;
-
+		document.getElementById('error').style.display = 'hidden';
         let payload = {};
         let Elements = formData.elements;
         //console.log(Elements);
@@ -91,25 +93,90 @@ app.bindForm = () => {
     
         app.client.request(undefined, formPath, formMethod, undefined, payload, (statusCode, __payload) => {
             if(statusCode !== 200){
-                console.log('Error:', __payload);
+				document.getElementById('error').innerText = __payload['Error'];
+				document.getElementById('error').style.display = 'block';
             }else{
-                console.log(statusCode);
                 app.formResponseProcessor(formId, payload, __payload);
             }
         });
     
     });
+	}catch(e){
+		console.log(e.message);
+	}
 }
 
 app.formResponseProcessor = (id, payload, formResponsePayload) => {
     let functionToCall = false;
     if(id == 'accountCreate'){
-        console.log('200 ok');
+		// create token payload
+		let tokenRequestPayload = {
+			phone: payload.phone,
+			password: payload.password,
+		};
+
+		// request to restapi for session creation
+		app.client.request(undefined, '/api/token', 'POST', undefined, tokenRequestPayload, (tokenResStatus, tokenResPayload) => {
+			sessionStorage.setItem('_token', JSON.stringify(tokenResPayload));
+			sessionStorage.setItem('s', tokenResStatus);
+			if(tokenResStatus !== 200){
+				document.getElementById('error').innerText = "Sorry, Failed to create session token please try manually";
+				document.getElementById('error').style.display = 'block';
+				setTimeout(() => { window.location = '/session/create' }, 3000);
+			}else{
+				// console.log(tokenResPayload);
+				localStorage.setItem('token', JSON.stringify(tokenResPayload));
+				app.formResponseProcessor('sessionCreate', tokenResPayload, tokenResPayload);	
+			}
+		});
     }
+
+	if(id == 'sessionCreate'){
+		app.setSessionToken(formResponsePayload);
+		// window.location = '/checks/all';
+	}
 };
+
+app.setSessionToken = (data) => {
+
+	localStorage.setItem('token', JSON.stringify(data));
+	app.config.sessionToken = JSON.stringify(data);
+	if(typeof(data) == 'object'){
+		app.setLoggedIn(true);
+	}else{
+		app.setLoggedIn(false);
+	}
+};
+
+app.setLoggedIn = (set) => {
+	let _t = document.querySelector('body');
+	let _c = _t.classList.contains('loggedIn'); 
+	set == true ? ( _c == true ? console.log('loggedIn') : _t.classList.add('loggedIn') ) : _t.classList.remove('loggedIn');
+};
+
+app.getSessionToken = () => {
+	let token = localStorage.getItem('token');
+	if(typeof(token) == 'string'){
+		try{
+			let tokenObj = JSON.parse(token);
+			app.config.sessionToken = token;
+			if(typeof(tokenObj) == 'object'){
+				app.setLoggedIn(true);
+			}else{
+				app.setLoggedIn(false);
+			}
+		}catch(e){
+			app.config.sessionToken = false;
+			app.setLoggedIn(false);
+		}
+	}
+};
+
+
 
 app.init = () => {
     app.bindForm();
+	app.getSessionToken();
 }
 
 window.onload = () => {

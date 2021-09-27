@@ -40,7 +40,7 @@ server.mainServer = (req, res) => {
 
     // fetch and parse url
     let parseURL = url.parse(req.url, true);
-    console.log(parseURL.search);
+    // console.log(parseURL.search);
 
     // get path from url
     let path = parseURL.pathname;
@@ -132,8 +132,9 @@ server.mainServer = (req, res) => {
                 _payload = typeof(payload) !== 'undefined' ? payload : '';
             }
             
-        //            console.log(_payload);           
+			// console.log(_payload);           
             res.writeHead(StatusCode);
+			// console.log(_payload['Error'], _payload['error']);
             res.end(_payload);
 
             

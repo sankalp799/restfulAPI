@@ -8,7 +8,7 @@ let app = {}
 app.init = () => {
     server.init();
     worker.init();
-	setTimeout(cli.init, 500);
+	//	setTimeout(cli.init, 500);
 }
 
 app.init();

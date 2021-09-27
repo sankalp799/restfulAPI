@@ -31,4 +31,13 @@ body.loggedIn .header ul li a.loggedIn{
     display: inline-block;
 }
 
+#error{
+	position:relative;
+	display: hidden;
+	width: 100%;
+	height:fit-content;
+	padding: 5px 10px;
+	color: white;
+	background-color: rgba(255, 0, 0, 0.621);
+}
 

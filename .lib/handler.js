@@ -177,8 +177,7 @@ handler._user.post = async (data, callback) => {
                          if(!error){
                              callback(200);
                          }else
-                             console.log(error);
-                             callback(500, {'Error': 'Internal Server Error'});
+                             callback(501, {'Error': 'Internal Server Error'});
                      }); 
                  }else{
                      callback(500, {"Error": "Internal Server Problem"});
@@ -249,7 +248,7 @@ handler._user.put = (data, callback) => {
                         if(!error){
                             callback(200);
                         }else{
-                            callback(500, {"error":"Internal Server Problem"});
+                            callback(500, {"Error":"Internal Server Problem"});
                         }
                     });
                 }else{
@@ -314,8 +313,9 @@ handler._user.delete = (data, callback) => {
  * TOKENS-HANDLER
  */
 handler.token = (data, callback) => {
+	console.log(data);
     let allowedMethods = ['get', 'post', 'put', 'delete'];                      
-    if(allowedMethods.indexOf(data.method) > -1){
+    if(allowedMethods.indexOf(data.method.toLowerCase()) > -1){
         handler._token[data.method](data, callback);
     }else{
         callback(405, {"Error": "Invalid Request"});
@@ -340,19 +340,24 @@ handler._token.post = (data, callback) => {
                     };
                     __data__.create('tokens', '' + newToken.tokenID, newToken, (err) => {
                         if(!err){
-                            callback(200);
+							console.log(newToken);
+                            callback(200, newToken);
                         }else{
                             callback(500, {'Error':'Could not create token please try again later'});
                         }
                     });
                 }else{
+					console.log('1');
                     callback(400, {"Error": "Incorrect Password"});
-                }
+					
+				}
             }else{
+				console.log('2');
                 callback(404, {"Error":"User do not exist"});
             }
         });
     }else{
+		console.log('3');
         callback(400, {"Error" : "Incomplete Fields"});
     }
 }
