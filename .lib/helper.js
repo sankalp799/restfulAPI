@@ -124,22 +124,22 @@ helper.addMasterPage = (string, data, callback) => {
 helper.interpolate = (string, data) => {
     string = typeof(string) == 'string' && string.length > 0 ? string : '';
     data = typeof(data) == 'object' && data !== null ? data : false;
-    
-    for(let key in _config.templateGlobals){
-        if(_config.templateGlobals.hasOwnProperty(key)){
-            data['global.'+key] = _config.templateGlobals[key];
-        }
-    }
-    //console.log(data);
-    for(let key in data){
-        if(data.hasOwnProperty(key) && typeof(data[key]) == 'string'){ 
-            let find = '{'+key+'}';
-            let replace = data[`${key}`];
-            string.replace('{head.title}', replace);
-            // console.log(string.replace(find, replaceBy));
-        }
-    }
-    //console.log(string);
+	let globalEnv = _config.templateGlobals;
+	// apply template data
+	Object.keys(data).forEach(k => {
+		string = string.replace(`{${k}}`, data[(k + '')]);
+		// console.log(k, ' - ', data[k], ' - ', string.indexOf(`{${k}}`));
+	});
+
+	// apply global variables
+	Object.keys(globalEnv).forEach(k => {
+		// console.log(k, ' - ', globalEnv[k]);
+		// console.log(string.indexOf(`{${k}}`));
+		string = string.replace(`{${k}}`, globalEnv[k]);
+	});
+	
+	// console.log(data, globalEnv);	
+    // console.log(string);
     return string;
 }
 

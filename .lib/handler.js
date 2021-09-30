@@ -69,6 +69,38 @@ handler.accountCreate = (data, callback) => {
 }
 
 
+
+handler.sessionCreate = (data, callback) => {
+    if(data.method == 'get'){
+        let pageData = {
+            'head.title':'Login',
+            'head.description':'Login with your phone number and password',
+            'body.class':'Login Account'
+        };
+        
+        __helper__.getTemplate('sessionCreate', pageData, (error, templateData) => {
+            if(templateData && !error){
+                __helper__.addMasterPage(templateData, pageData, (error, masterPageData) => {
+                    if(masterPageData && !error){
+                        //console.log(masterPageData);
+						console.log('sessionCreation requested');
+                        callback(200, masterPageData, 'html');
+                    }else{
+                        callback(500, undefined, 'html')
+                    }
+                });
+            }else{
+                callback(404, undefined, 'html');
+            }
+        });
+    }else{
+        callback(405, undefined, 'html')
+    }
+}
+
+
+
+
 handler.favicon = (data, callback) => {
     if(data.method == 'get'){
         __helper__.getStaticAssets('favicon.ico', (error, data) => {
@@ -96,7 +128,7 @@ handler.public = (data, callback) => {
 
                     if(trimmedFileName.indexOf('.css') > -1){
                         contentType = 'css';
-                        console.log('css');
+                        // console.log('css');
                     }
                     if(trimmedFileName.indexOf('.ico') > -1){
                         contentType = 'favicon';
@@ -313,7 +345,6 @@ handler._user.delete = (data, callback) => {
  * TOKENS-HANDLER
  */
 handler.token = (data, callback) => {
-	console.log(data);
     let allowedMethods = ['get', 'post', 'put', 'delete'];                      
     if(allowedMethods.indexOf(data.method.toLowerCase()) > -1){
         handler._token[data.method](data, callback);
@@ -391,7 +422,7 @@ handler._token.put = (data, callback) => {
                 __data__.update('tokens', '' + id, user_token, (err) => {
                     if(!err){
                         console.log('updated token');
-                        callback(200);
+                        callback(200, user_token);
                     }else{
                         callback(500, {'Error':'Internal Server Problem'});
                     }

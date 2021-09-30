@@ -75,7 +75,7 @@ app.bindForm = () => {
 	try{
     document.querySelector('form').addEventListener('submit', (e) => {
         e.preventDefault();
-        let formData = document.getElementById('accountCreate');
+        let formData = document.querySelector('form');
         let formId = formData.id;
         let formMethod = formData.method;
         let formPath = formData.action;
@@ -92,6 +92,7 @@ app.bindForm = () => {
         
     
         app.client.request(undefined, formPath, formMethod, undefined, payload, (statusCode, __payload) => {
+			console.log(__payload);
             if(statusCode !== 200){
 				document.getElementById('error').innerText = __payload['Error'];
 				document.getElementById('error').style.display = 'block';
@@ -133,7 +134,7 @@ app.formResponseProcessor = (id, payload, formResponsePayload) => {
 
 	if(id == 'sessionCreate'){
 		app.setSessionToken(formResponsePayload);
-		// window.location = '/checks/all';
+		window.location = '/checks/all';
 	}
 };
 
@@ -144,7 +145,9 @@ app.setSessionToken = (data) => {
 	if(typeof(data) == 'object'){
 		app.setLoggedIn(true);
 	}else{
+		localStorage.removeItem('token');
 		app.setLoggedIn(false);
+		app.config.sessionToken = false;
 	}
 };
 
@@ -172,11 +175,71 @@ app.getSessionToken = () => {
 	}
 };
 
+app.bindLogoutEvent = () => {
+	document.getElementById('sessionLogout').addEventListener('click', (e) => {
+		e.preventDefault();
+		try{
+			let currToken = JSON.parse(app.config.sessionToken);
+			currToken = typeof(currToken) == 'object' ? currToken : false;
+			console.log(currToken);
+			if(currToken){
+				let _token = {
+					'id': currToken.id,
+				};
+				app.client.request(undefined, '/api/token', 'DELETE', undefined, _token, (s, rp) => {
+					console.log(s, rp);
+					app.setSessionToken(false);
+					window.location = '/';
+				});
+			}
+		}catch(e){
+			console.log(e.message);
+		}
+	});
+};
 
+app.renewToken = (callback) => {
+	let token = typeof(app.config.sessionToken) == 'object' ? app.config.sessionToken : false;
+	if(token){
+		// renew this token 
+		// create new token payload
+		let userPayload = {
+			'id':token.id,
+			'extend': true,
+		};
+
+		// make request
+		app.client.request(undefined, '/api/token', 'PUT', undefined, userPayload, (s, rp) => {
+			if(s !== 200){
+				app.setSessionToken(false);
+				callback(false);
+			}else{
+				// success
+				app.setSessionToken(rp);
+				callback(true);
+			}
+		});
+	}else{
+		app.setSessionToken(false);
+		callback(false);
+	}
+};
+
+app.renewTokenWorker = () => {
+	setInterval(() => {
+		app.renewToken((res) => {
+			res ? console.log('token renewed') : console.log(`couldn't renew token`);
+		});
+	}, 900000)
+};
 
 app.init = () => {
     app.bindForm();
 	app.getSessionToken();
+	app.bindLogoutEvent();
+	// give some time 
+	// to load files
+	setTimeout(app.renewTokenWorker, 350);
 }
 
 window.onload = () => {
